@@ -77,15 +77,7 @@ const Projects = () => {
   const folderBackRef = useRef(null);
   const folderFrontRef = useRef(null);
   const cardsRef = useRef([]);
-  const mobileScrollRef = useRef(null);
-
-  const scrollMobileProjects = (direction) => {
-    const el = mobileScrollRef.current;
-    if (!el) return;
-    const card = el.querySelector('[data-mobile-card]');
-    const amount = card ? card.offsetWidth + 16 : el.offsetWidth * 0.8;
-    el.scrollBy({ left: direction * amount, behavior: 'smooth' });
-  };
+  const mobileCardsRef = useRef([]);
 
   useEffect(() => {
     let ctx = gsap.context(() => {
@@ -119,9 +111,36 @@ const Projects = () => {
       let mm = gsap.matchMedia();
 
       mm.add({
-        isDesktop: "(min-width: 768px)"
+        isDesktop: "(min-width: 768px)",
+        isMobile: "(max-width: 767px)"
       }, (context) => {
-        let { isDesktop } = context.conditions;
+        let { isDesktop, isMobile } = context.conditions;
+
+        if (isMobile) {
+          mobileCardsRef.current.forEach((card, index) => {
+            if (!card) return;
+            gsap.set(card, { clearProps: "x,y,z,rotation,scale,opacity" });
+
+            // Sticky stack + slight hide as the next card scrolls over it (same technique as Skills)
+            card.style.top = `${90 + index * 16}px`;
+            gsap.set(card, { zIndex: index + 1 });
+
+            if (index === mobileCardsRef.current.length - 1) return; // keep the last card fully focused
+
+            gsap.to(card, {
+              scale: 0.94 - index * 0.015,
+              y: -12 - index * 6,
+              filter: "blur(6px)",
+              opacity: 0.4,
+              scrollTrigger: {
+                trigger: card,
+                start: `top ${90 + index * 16}px`,
+                end: "bottom top",
+                scrub: true,
+              }
+            });
+          });
+        }
 
         if (isDesktop) {
           let floatTween;
@@ -302,66 +321,36 @@ const Projects = () => {
         </div>
       </div>
 
-      {/* Mobile Project Carousel */}
-      <div className="md:hidden relative w-full px-6 z-10 overflow-hidden">
-        <style>{`
-          .hide-scrollbar::-webkit-scrollbar { display: none; }
-          .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        `}</style>
-
-        <div
-          ref={mobileScrollRef}
-          className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar"
-        >
-          {projectsData.map((project, i) => (
-            <div
-              key={`mob-${i}`}
-              data-mobile-card
-              className="shrink-0 w-full snap-center snap-always min-h-[260px] h-auto rounded-[24px] overflow-hidden border border-white/15 bg-[#141414] p-6 flex flex-col justify-between shadow-[0_20px_40px_rgba(0,0,0,0.9)]"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold tracking-widest text-red-500 bg-red-600/10 px-2 py-0.5 rounded">
-                  {project.episode}
-                </span>
-                <span className="text-xs font-mono text-red-400 font-bold">{project.match} Match</span>
-              </div>
-              <div className="space-y-2 py-4">
-                <div className="text-[11px] font-mono uppercase tracking-widest text-white/40">
-                  {project.category}
-                </div>
-                <h3 className="text-xl font-black text-white">{project.title}</h3>
-                <p className="text-xs text-white/70 font-light leading-relaxed">{project.description}</p>
-              </div>
-              <div className="flex flex-wrap gap-1 pt-2 border-t border-white/10">
-                {project.tags.map((tag, tIdx) => (
-                  <span key={tIdx} className="text-[10px] font-mono text-white/60 bg-white/5 px-2 py-0.5 rounded">
-                    {tag}
-                  </span>
-                ))}
-              </div>
+      {/* Mobile Project List */}
+      <div className="md:hidden relative w-full flex flex-col gap-6 px-6 pb-16 z-10">
+        {projectsData.map((project, i) => (
+          <div
+            key={`mob-${i}`}
+            ref={el => mobileCardsRef.current[i] = el}
+            className="sticky w-full min-h-[260px] h-auto rounded-[24px] overflow-hidden border border-white/15 bg-[#141414] p-6 flex flex-col justify-between shadow-[0_20px_40px_rgba(0,0,0,0.9)]"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold tracking-widest text-red-500 bg-red-600/10 px-2 py-0.5 rounded">
+                {project.episode}
+              </span>
+              <span className="text-xs font-mono text-red-400 font-bold">{project.match} Match</span>
             </div>
-          ))}
-        </div>
-
-        {/* Swipe Arrow Controls */}
-        <button
-          onClick={() => scrollMobileProjects(-1)}
-          aria-label="Previous project"
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/70 backdrop-blur-sm border border-white/20 text-white active:scale-90 transition-transform"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        <button
-          onClick={() => scrollMobileProjects(1)}
-          aria-label="Next project"
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/70 backdrop-blur-sm border border-white/20 text-white active:scale-90 transition-transform"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+            <div className="space-y-2 py-4">
+              <div className="text-[11px] font-mono uppercase tracking-widest text-white/40">
+                {project.category}
+              </div>
+              <h3 className="text-xl font-black text-white">{project.title}</h3>
+              <p className="text-xs text-white/70 font-light leading-relaxed">{project.description}</p>
+            </div>
+            <div className="flex flex-wrap gap-1 pt-2 border-t border-white/10">
+              {project.tags.map((tag, tIdx) => (
+                <span key={tIdx} className="text-[10px] font-mono text-white/60 bg-white/5 px-2 py-0.5 rounded">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
     </section>
