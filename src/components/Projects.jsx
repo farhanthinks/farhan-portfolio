@@ -117,28 +117,26 @@ const Projects = () => {
         let { isDesktop, isMobile } = context.conditions;
 
         if (isMobile) {
-          mobileCardsRef.current.forEach((card, index) => {
+          mobileCardsRef.current.forEach((card) => {
             if (!card) return;
-            gsap.set(card, { clearProps: "x,y,z,rotation,scale,opacity" });
+            card.style.top = "";
+            gsap.set(card, { clearProps: "x,y,z,rotation,scale,opacity,zIndex,filter" });
 
-            // Sticky stack + slight hide as the next card scrolls over it (same technique as Skills)
-            card.style.top = `${90 + index * 16}px`;
-            gsap.set(card, { zIndex: index + 1 });
-
-            if (index === mobileCardsRef.current.length - 1) return; // keep the last card fully focused
-
-            gsap.to(card, {
-              scale: 0.94 - index * 0.015,
-              y: -12 - index * 6,
-              filter: "blur(6px)",
-              opacity: 0.4,
-              scrollTrigger: {
-                trigger: card,
-                start: `top ${90 + index * 16}px`,
-                end: "bottom top",
-                scrub: true,
+            // Clean fade + rise into place as each card enters view, no overlap or stacking
+            gsap.fromTo(card,
+              { y: 40, opacity: 0 },
+              {
+                y: 0,
+                opacity: 1,
+                duration: 0.8,
+                ease: "power3.out",
+                scrollTrigger: {
+                  trigger: card,
+                  start: "top 88%",
+                  toggleActions: "play none none reverse",
+                }
               }
-            });
+            );
           });
         }
 
@@ -327,7 +325,7 @@ const Projects = () => {
           <div
             key={`mob-${i}`}
             ref={el => mobileCardsRef.current[i] = el}
-            className="sticky w-full min-h-[260px] h-auto rounded-[24px] overflow-hidden border border-white/15 bg-[#141414] p-6 flex flex-col justify-between shadow-[0_20px_40px_rgba(0,0,0,0.9)]"
+            className="relative w-full min-h-[260px] h-auto rounded-[24px] overflow-hidden border border-white/15 bg-[#141414] p-6 flex flex-col justify-between shadow-[0_20px_40px_rgba(0,0,0,0.9)]"
           >
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono font-bold tracking-widest text-red-500 bg-red-600/10 px-2 py-0.5 rounded">
