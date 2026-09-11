@@ -266,7 +266,7 @@ const Hero = () => {
                 </svg>
               </a>
               <a
-                href="https://github.com/MohammedFarhan1"
+                href="https://github.com/farhanthinks"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"
