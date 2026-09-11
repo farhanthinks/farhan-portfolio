@@ -13,6 +13,8 @@ const Contact = () => {
     permission: false
   });
 
+  const [status, setStatus] = useState('idle'); // idle | sending | success | error
+
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"]
@@ -30,8 +32,8 @@ const Contact = () => {
     }));
   };
 
-  // Handle form submission logic
-  const handleSubmit = (e) => {
+  // Handle form submission logic (Web3Forms)
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.permission) {
@@ -39,10 +41,37 @@ const Contact = () => {
       return;
     }
 
-    console.log("Form Data Submitted Successfully:", formData);
-    alert(`Thanks ${formData.firstName}! Message captured successfully.`);
-    
-    setFormData({ firstName: '', lastName: '', email: '', message: '', permission: false });
+    setStatus('sending');
+
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          access_key: "76cb38e2-9a5c-47e5-aaac-5f323987fe33",
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+          email: formData.email,
+          message: formData.message,
+          subject: `New portfolio message from ${formData.firstName}`
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setStatus('success');
+        setFormData({ firstName: '', lastName: '', email: '', message: '', permission: false });
+      } else {
+        console.error("Web3Forms error:", result);
+        setStatus('error');
+      }
+    } catch (error) {
+      console.error("Submission failed:", error);
+      setStatus('error');
+    }
   };
 
   return (
@@ -180,14 +209,26 @@ const Contact = () => {
 
                   <button
                     type="submit"
-                    className="w-full sm:w-auto px-8 py-3.5 rounded bg-red-600 text-white font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-red-700 transition-all duration-300 group whitespace-nowrap shadow-[0_0_20px_rgba(229,9,20,0.6)] hover:scale-105"
+                    disabled={status === 'sending'}
+                    className="w-full sm:w-auto px-8 py-3.5 rounded bg-red-600 text-white font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-red-700 transition-all duration-300 group whitespace-nowrap shadow-[0_0_20px_rgba(229,9,20,0.6)] hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
-                    Send Message
+                    {status === 'sending' ? 'Sending...' : 'Send Message'}
                     <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
                   </button>
                 </div>
+
+                {status === 'success' && (
+                  <p className="text-red-400 font-mono normal-case">
+                    Your message has been received. I'll get back to you soon.
+                  </p>
+                )}
+                {status === 'error' && (
+                  <p className="text-red-500 font-mono normal-case">
+                    Something went wrong. Please try again or email me directly.
+                  </p>
+                )}
               </div>
             </div>
           </form>
