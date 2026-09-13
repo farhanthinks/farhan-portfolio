@@ -182,7 +182,7 @@ const Hero = () => {
       ></div>
 
       {/* 3. Main Content Layer */}
-      <div ref={contentRef} className="relative z-20 w-full max-w-7xl mx-auto px-6 md:px-12 h-full flex flex-col justify-between pt-24 pb-12 lg:pt-16 lg:pb-8">
+      <div ref={contentRef} className="relative z-20 w-full max-w-7xl mx-auto px-6 md:px-12 flex-1 flex flex-col justify-between pt-24 pb-12 lg:pt-16 lg:pb-8">
         
         {/* Top Netflix Cinematic Badge */}
         <div className="hero-anim-item flex items-center justify-end w-full">
